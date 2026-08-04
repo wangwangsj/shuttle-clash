@@ -293,6 +293,52 @@
     font-size: 13px; font-weight: 800; color: #141821; opacity: .6; pointer-events: auto;
   }
   .room-back:hover { opacity: 1; }
+
+  /* ── 雪山大冒险 HUD ── */
+  #runhud { display: none; }
+  #runhud.on { display: block; }
+  #runscore {
+    position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    font-family: "Arial Black", sans-serif; font-size: 44px; font-weight: 900; color: #fff;
+    -webkit-text-stroke: 4px #0c0c14; paint-order: stroke fill;
+    text-shadow: 4px 5px 0 rgba(12,12,20,.8);
+  }
+  #runmeta {
+    position: absolute; top: calc(72px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%); display: flex; gap: 16px;
+    font-size: 15px; font-weight: 900;
+    text-shadow: 2px 2px 0 rgba(12,12,20,.9);
+  }
+  #runcombo { color: #9fd0ff; }
+  #runmult { color: #ffd94d; transition: opacity .3s; }
+  #runaval {
+    position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); left: 50%;
+    transform: translateX(-50%); width: min(420px, 70vw); height: 14px;
+    background: rgba(12,12,20,.6); border: 2.5px solid #0c0c14; border-radius: 3px;
+  }
+  #runaval .fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #6fa0d0, #e84b52);
+    transition: width .2s;
+  }
+  #runaval .tag {
+    position: absolute; right: -46px; top: -3px; font-size: 12px; font-weight: 900;
+    color: #ff9a9a; text-shadow: 2px 2px 0 rgba(12,12,20,.9);
+  }
+
+  /* 自动跑位开关：漫画贴纸风 */
+  .assist-chip {
+    pointer-events: auto; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    background: #f4f1e8; color: #141821;
+    border: 3px solid #0c0c14; border-radius: 4px;
+    box-shadow: 3px 4px 0 rgba(12,12,20,.7);
+    padding: 9px 16px; font-size: 13px; transform: rotate(-.5deg);
+    max-width: 560px;
+  }
+  .assist-chip input { width: 18px; height: 18px; accent-color: #e83b47; cursor: pointer; }
+  .assist-chip b { font-weight: 900; }
   #fps { position: absolute; top: 10px; left: 12px; font: 11px/1 ui-monospace, monospace; opacity: .35; }
 
   /* ══ 触控 UI ══════════════════════════════════════════════ */
@@ -335,6 +381,18 @@
     font-size: 15px; font-weight: 700; letter-spacing: .14em;
     text-shadow: 0 2px 8px rgba(0,0,0,.8); opacity: .9;
   }
+  /* 滑动瞄准方向箭头：拖动时指向出球方向 */
+  .tc-hit-arrow {
+    position: absolute; font-size: 26px; color: #ffd94d;
+    text-shadow: 0 0 8px rgba(255,180,60,.8), 2px 2px 0 #0c0c14;
+    opacity: 0; transform: rotate(var(--aim, 0rad)) translateX(64px);
+    transition: opacity .1s;
+    pointer-events: none;
+  }
+  .tc-hit.aiming .tc-hit-arrow { opacity: 1; }
+  /* 摇杆关闭（自动跑位）时：击球区提示居中，摇杆提示隐藏 */
+  #touch-ui.no-stick .tc-hint-stick { display: none; }
+  #touch-ui.no-stick .tc-hint { justify-content: center; }
 
   .tc-hint {
     position: absolute; left: 0; right: 0;
@@ -387,7 +445,7 @@
     .tc-hint { bottom: calc(128px + env(safe-area-inset-bottom)); }
   }
 </style>
-  <script type="module" crossorigin src="./assets/index-PeTcjGJA.js"></script>
+  <script type="module" crossorigin src="./assets/index-BENnZ2v8.js"></script>
 </head>
 <body>
 <div id="app"></div>
@@ -418,6 +476,12 @@
   </div>
 
   <div id="matchpoint">赛 点</div>
+
+  <div id="runhud">
+    <div id="runscore">0</div>
+    <div id="runmeta"><span id="rundist">0 m</span><span id="runcombo"></span><span id="runmult"></span></div>
+    <div id="runaval"><div class="fill"></div><span class="tag">雪崩</span></div>
+  </div>
   <div id="shotname"></div>
   <div id="call"></div>
 
@@ -460,6 +524,10 @@
       <h3>双人联机 🌐</h3>
       <p>发个房间码，和朋友隔空对打</p>
     </div>
+    <div class="mode" data-mode="snowrun">
+      <h3>雪山大冒险 🎿</h3>
+      <p>边滑雪边杀球，空翻加分，别被雪崩追上</p>
+    </div>
   </div>
 
   <div class="controls">
@@ -475,6 +543,11 @@
     </div>
   </div>
 
+  <label class="assist-chip" id="assistwrap">
+    <input type="checkbox" id="assistchk" checked />
+    <span><b>自动跑位</b> · 角色自己追球，你只管挥拍和选落点（任天堂式，新手推荐）</span>
+  </label>
+
   <div class="tips" id="tips-kb">
     击球瞬间<b>方向键推向对手</b> = 打后场，<b>推向自己</b> = 吊网前，<b>左右推</b> = 打对角。<br>
     球举得高（<b>1.95 米以上</b>）+ 蓄力过半 = <b>杀球</b>，0.2 秒到对面，但打空档才致命。<br>
@@ -482,9 +555,9 @@
   </div>
 
   <div class="tips" id="tips-touch" hidden>
-    <b>左半屏</b>按住拖动 = 跑位 · <b>右半屏</b>按住蓄力，松开击球。<br>
-    松开那一下摇杆<b>推向对手</b> = 打后场，<b>推回自己</b> = 吊网前，<b>左右推</b> = 打对角。<br>
-    在高点击球（举过头顶）+ 蓄力过半 = <b>杀球</b>，0.2 秒到对面。11 分制，需净胜 2 分。
+    角色<b>自动跑位追球</b>，你只管出手：<b>按住蓄力 → 拖动选方向 → 松开击球</b>。<br>
+    <b>往上滑</b> = 打后场，<b>往下滑</b> = 吊网前，<b>左右滑</b> = 打对角。<br>
+    球在高点 + 蓄力过半 = <b>杀球</b>，0.2 秒到对面。11 分制，需净胜 2 分。
   </div>
 
   <button class="start-btn" id="startbtn">开 始 比 赛</button>
