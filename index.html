@@ -47,13 +47,16 @@
     position: fixed; inset: 0; pointer-events: none; z-index: 11;
     background-image: radial-gradient(rgba(10,14,20,.55) 1px, transparent 1.3px);
     background-size: 5px 5px;
-    opacity: .10;
+    opacity: .065;
     mix-blend-mode: multiply;
   }
   #manga-vignette {
     position: fixed; inset: 0; pointer-events: none; z-index: 11;
-    background: radial-gradient(ellipse at center, transparent 58%, rgba(2,4,8,.5) 100%);
+    background: radial-gradient(ellipse at center, transparent 66%, rgba(2,4,8,.30) 100%);
   }
+  .stylize-off #manga-paper,
+  .stylize-off #manga-vignette,
+  .stylize-off .ono { display: none; }
 
   /* 拟声词：描边大字，砸出来再散掉 */
   .ono {
@@ -445,7 +448,7 @@
     .tc-hint { bottom: calc(128px + env(safe-area-inset-bottom)); }
   }
 </style>
-  <script type="module" crossorigin src="./assets/index-f0aK3Lq0.js"></script>
+  <script type="module" crossorigin src="./assets/index-C6eEwWDg.js"></script>
 </head>
 <body>
 <div id="app"></div>
